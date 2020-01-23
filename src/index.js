@@ -1,12 +1,27 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+import "./application.scss";
+import "bootstrap/dist/css/bootstrap.min.css";
+import React from "react";
+import { render } from "react-dom";
+import { PersistGate } from "redux-persist/integration/react";
+import storage from "redux-persist/lib/storage";
+import ApplicationContainer from "./state/container/application";
+import ApplicationComponent from "./display/application";
+import { Provider } from "react-redux";
+import { getStorage } from "./state/store";
 
-ReactDOM.render(<App />, document.getElementById('root'));
+const persistConfig = {
+  key: "daily-harvest-web-persist-store",
+  storage,
+  whitelist: ["products"]
+};
+const { persistor, store } = getStorage(persistConfig);
+const rootElement = document.getElementById("root");
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+render(
+  <Provider store={store}>
+    <PersistGate loading={null} persistor={persistor}>
+      <ApplicationContainer component={ApplicationComponent} />
+    </PersistGate>
+  </Provider>,
+  rootElement
+);

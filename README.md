@@ -1,68 +1,115 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Installation
 
-## Available Scripts
+    npm install ; npm run start
 
-In the project directory, you can run:
+App will open on http://localhost:3000/
 
-### `yarn start`
+# Redux Architecture
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Overview
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+I like to keep things simple and consistent. In implementing Redux into the application, I’d like us to have an architecture that is straightforward and predictable while decoupling our views from the rest of the application architecture.
 
-### `yarn test`
+### The render flow I’d like to implement is:
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. React Router determines the appropriate container for the current route
 
-### `yarn build`
+2. The container connects the appropriate display component with the Redux store
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. The display component renders with its required props provided by the container
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+### The event flow I’d like to implement is:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. User clicks a button in a display component
 
-### `yarn eject`
+2. Button calls a callback in the display component
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+3. Display component collects the necessary local variables and calls a function provided by its container component.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+4. Function dispatches an action and a payload
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+5. Action is received by a saga
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+6. Saga retrieves whatever data is necessary and/or performs task by calling services and dispatches 7. whatever further actions are necessary to resolve the action
 
-## Learn More
+7. Reducers update the application state
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+8. View updates due to changes in the props provided by it’s container
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Definitions
 
-### Code Splitting
+### Namespaces
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+Namespaces loosely match keys in the Redux store. ex: application, product, products, cache, etc.
 
-### Analyzing the Bundle Size
+### Actions
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+Actions are thin. They aren’t really ‘actions’ as much as they are requests for an action. Thin events consist of only an event type and a payload. They contain no business logic. Even simple business logic should be handled by sagas and services. No Thunks.
 
-### Making a Progressive Web App
+Naming conventions:
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+- Synchronous:
 
-### Advanced Configuration
+       reduceProductList
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+       getStringToSnakecase
 
-### Deployment
+        {action description [verb]} + {namespace [noun]} + {modifier} (optional)
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
+- Asynchronous:
 
-### `yarn build` fails to minify
+        initializeApplicationRequest
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+        fetchProductBySKURequest
+
+        {action description [verb]}  + {namespace[noun]} + {modifier} (optional) + {status} (request|success|error)
+
+### Sagas
+
+Sagas exists to call services, schedule action dispatch and to handle control flow. Sagas are thin. They contain no Business logic beyond single line calls to services or dispatching action creators.
+
+Naming conventions:
+
+    handleInitializeApplicationRequest
+
+    “handle” + {action name}
+
+### Services:
+
+Services are fat. They are where the business logic lives. A service might make an API call, a service may return a formatted string. A service might be four lines of code or it might be a hundred. Either way, a service is a single file. A service does a single thing. Services are standalone functions, not members of namespace objects or ‘classes’. We shouldn’t have ‘utility’ files, ‘helper’ files, or ‘manager’ classes. If you need to do a thing, create a service. Testing these is going to be so cool.
+
+Naming conventions:
+
+    applicationInitializeService
+
+    {namespace [noun]} + {action description [verb]} + “Service”
+
+### Reducers
+
+Reducers are thin. Reducers exist only to merge action payloads appropriately into state.
+
+Naming conventions:
+
+    application
+
+    {namespace [noun]}
+
+### Display Components
+
+Simply put, display components should have minimal (goal: zero) dependencies outside of the display folder. All of a display component’s other dependencies should be provided by their parent container component in the form of props.
+
+### Containers
+
+Containers act as wrappers for our display components. Containers act as mediators, connecting their display component with the rest of the application and providing selectors through which our views can access state values and values provided by services. This allows for minimal dependencies between views and the rest of the application. While display components and actions should not have access to services, Containers should be able to access synchronous services.
+
+Personally, I advocate against the philosophy of one container per ‘page’ or ‘screen’; this leads to excessive prop drilling. Any relatively complex display component should have its own container connecting it to the application state.
+
+## A note on Thunks, fat actions, and custom middleware
+
+There will be times that a thunk might make sense. Sometimes we might want to just call a service from inside an action instead of creating a saga. Maybe the action is a synchronous action. Maybe it sounds cool to have all our analytics actions (for example) handled in one place by a custom middleware. I disagree. I’m a huge fan of consistency in architecture and code style. The problem with implementing any of these solutions alongside of Sagas is that, all of a sudden, you don’t know where the business logic lives. and if you need to add something asynchronous to the action later on, you have to create that saga anyway. Put everything in sagas and services. Just do it. Create the saga now.
+
+## A note on Immutable.js
+
+    I’d prefer that we don’t use Immutable.js because reasons.
+
+(Thanks to Per)

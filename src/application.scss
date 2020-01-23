@@ -1,0 +1,24 @@
+$application-header-height: 100px;
+$application-footer-height: 100px;
+$application-padding: 40px;
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+.application-page__container {
+  min-height: calc(
+    100vh - #{$application-header-height} - #{$application-footer-height}
+  );
+  padding: 0 $application-padding 0 $application-padding;
+}

@@ -1,0 +1,14 @@
+@import "../../../application.scss";
+
+.application-header__container {
+  align-items: center;
+  border-bottom: solid 1px lightgrey;
+  display: flex;
+  height: $application-header-height;
+  padding: 0 $application-padding 0 $application-padding;
+}
+
+.application-header__link {
+  color: #000;
+  margin-right: 20px;
+}

@@ -1,0 +1,10 @@
+@import "../../application.scss";
+
+.footer__container {
+  align-items: center;
+  border-top: solid 1px lightgrey;
+  font-size: 10px;
+  display: flex;
+  height: $application-footer-height;
+  padding: 0 $application-padding 0 $application-padding;
+}
